@@ -6,25 +6,34 @@ import os
 import jwt
 from datetime import datetime, timedelta
 
-load_dotenv()
+# ===== Load the correct .env from auth service
+load_dotenv(dotenv_path="../auth/.env")  # يشير على ملف .env الصحيح
 
-JWT_SECRET = os.getenv("JWT_SECRET")
-if not JWT_SECRET:
-    raise RuntimeError("JWT_SECRET not set in .env")
-
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+# ===== JWT setup
+JWT_SECRET = os.getenv("JWT_SECRET", "fallback_secret")
+# إزالة أي مسافات أو علامات اقتباس حول الـ secret
+JWT_SECRET = JWT_SECRET.strip().strip('"')
+print("===== DEBUG JWT_SECRET =====", repr(JWT_SECRET), "length:", len(JWT_SECRET))
 
 def create_token(data: dict, expires_hours: int = 2) -> str:
     payload = data.copy()
     payload["exp"] = datetime.utcnow() + timedelta(hours=expires_hours)
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+    print("Generated JWT token:", token)
+    return token
 
 def decode_token(token: str) -> dict | None:
+    print("===== DEBUG decode_token =====")
+    print("Token received:", token)
     try:
-        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        decoded = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        print("Decoded token:", decoded)
+        return decoded
     except jwt.ExpiredSignatureError:
+        print("JWT expired")
         return None
-    except jwt.InvalidTokenError:
+    except jwt.InvalidTokenError as e:
+        print("JWT invalid:", e)
         return None
 
 # ===== FastAPI app

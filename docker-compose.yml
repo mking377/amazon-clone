@@ -1,129 +1,35 @@
 version: "3.8"
-
 services:
-  mongo:
-    image: mongo:7
+  postgres:
+    image: postgres:15
     environment:
-      MONGO_INITDB_DATABASE: amazon_clone
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: shopdb
     ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
+      - "5432:5432"
 
   redis:
     image: redis:7
     ports:
       - "6379:6379"
 
-  auth:
-    build: ./services/auth
+  backend:
+    build: ./backend
     working_dir: /app
     volumes:
-      - ./services/auth:/app
+      - ./backend:/app
       - /app/node_modules
     command: sh -c "npm install && npm run dev"
     environment:
+      DATABASE_URL: postgres://devuser:devpass@postgres:5432/shopdb
+      REDIS_URL: redis://redis:6379
       NODE_ENV: development
-      MONGO_URI: mongodb://mongo:27017/amazon_clone
-      PORT: 4000
-      FRONTEND_URL: http://localhost:3000
-    ports:
-      - "4000:4000"
-    depends_on:
-      - mongo
-    env_file:
-      - ./services/auth/.env
-
-  user:
-    build:
-      context: ./services/user
-      dockerfile: Dockerfile
-    working_dir: /app
-    volumes:
-      - ./services/user:/app
-    command: uvicorn app:app --host 0.0.0.0 --port 5000 --reload
-    environment:
-      MONGO_URI: mongodb://mongo:27017/amazon_clone
-      PORT: 5000
-      FRONTEND_URL: http://localhost:3000
-      AUTH_URL: http://auth:4000
     ports:
       - "5000:5000"
     depends_on:
-      - mongo
-      - auth
-    env_file:
-      - ./services/user/.env
-
-  product:
-    build:
-      context: ./services/product
-      dockerfile: Dockerfile
-    working_dir: /app
-    volumes:
-      - ./services/product:/app
-    command: go run main.go
-    environment:
-      MONGO_URI: mongodb://mongo:27017/amazon_clone
-      PORT: 5001
-    ports:
-      - "5001:5001"
-    depends_on:
-      - mongo
-    env_file:
-      - ./services/product/.env
-
-  cart:
-    build: ./services/cart
-    working_dir: /app
-    volumes:
-      - ./services/cart:/app
-      - /app/node_modules
-    command: sh -c "npm install && npm start"
-    environment:
-      MONGO_URI: mongodb://mongo:27017/amazon_clone
-      PORT: 5002
-    ports:
-      - "5002:5002"
-    depends_on:
-      - mongo
-    env_file:
-      - ./services/cart/.env
-
-  order:
-    build: ./services/order
-    working_dir: /app
-    volumes:
-      - ./services/order:/app
-      - /app/node_modules
-    command: sh -c "npm install && npm start"
-    environment:
-      MONGO_URI: mongodb://mongo:27017/amazon_clone
-      PORT: 5003
-    ports:
-      - "5003:5003"
-    depends_on:
-      - mongo
-    env_file:
-      - ./services/order/.env
-
-  payment:
-    build:
-      context: ./services/payment
-      dockerfile: Dockerfile
-    working_dir: /app
-    volumes:
-      - ./services/payment:/app
-    command: uvicorn payment_service:app --host 0.0.0.0 --port 5004 --reload
-    environment:
-      MONGO_URI: mongodb://mongo:27017/amazon_clone
-      PORT: 5004
-    ports:
-      - "5004:5004"
-    depends_on:
-      - mongo
-    env_file:
-      - ./services/payment/.env
+      - postgres
+      - redis
 
   frontend:
     build: ./frontend
@@ -131,24 +37,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - /app/.next
     command: sh -c "npm install && npm run dev"
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_AUTH_API: http://localhost:4000/auth
-      NEXT_PUBLIC_USER_API: http://localhost:5000/user
-      NEXT_PUBLIC_PRODUCT_API: http://localhost:5001/api
-      NEXT_PUBLIC_CART_API: http://localhost:5002/api
-      NEXT_PUBLIC_ORDER_API: http://localhost:5003/api
-      NEXT_PUBLIC_PAYMENT_API: http://localhost:5004/api
-    depends_on:
-      - auth
-      - user
-      - product
-      - cart
-      - order
-      - payment
-
-volumes:
-  mongo-data:
+      NEXT_PUBLIC_API: http://localhost:5000
