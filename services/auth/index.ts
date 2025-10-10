@@ -11,14 +11,8 @@ import superAdminRoutes from "./routes/superAdminRoutes";
 dotenv.config();
 
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
-
-
 const app = express();
 const PORT = process.env.PORT || 4000;
-console.log("===== DEBUG Node JWT_SECRET =====", JSON.stringify(process.env.JWT_SECRET));
-console.log("Length:", process.env.JWT_SECRET?.length);
-console.log("Node secret hex:", Buffer.from(JWT_SECRET).toString("hex"));
 // ✅ Middlewares
 app.use(
   cors({
