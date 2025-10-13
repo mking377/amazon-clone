@@ -80,6 +80,37 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState<SnackbarState | null>(null);
 
+ const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setSnackbar(null);
+
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API}/auth/login`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.message || "Login failed");
+
+    // ✅ حفظ التوكن بعد تسجيل الدخول
+    if (data.accessToken) {
+      localStorage.setItem("accessToken", data.accessToken);
+    }
+
+    setSnackbar({ message: t("success"), type: "success" });
+    router.replace(`/${locale}/profile`);
+  } catch (err: any) {
+    setSnackbar({ message: `${t("error")} ${err.message || err}`, type: "error" });
+  } finally {
+    setLoading(false);
+  }
+};
+/*
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -105,6 +136,8 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+*/
 
   const handleSnackbarClose = () => {
     setSnackbar(null);

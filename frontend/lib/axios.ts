@@ -15,6 +15,108 @@ export const userApi = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// إعداد interceptors
+const setupInterceptors = (apiInstance: any) => {
+  apiInstance.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem("accessToken");
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  apiInstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response) {
+        const { status, data, config } = error.response;
+        console.error("API Error:", {
+          url: config?.url,
+          status,
+          data: data || "No response body",
+        });
+      } else {
+        console.error("Network Error:", error.message);
+      }
+      return Promise.reject(error);
+    }
+  );
+};
+
+setupInterceptors(authApi);
+setupInterceptors(userApi);
+
+export default { authApi, userApi };
+
+
+/*
+// src/lib/axios.ts
+import axios from "axios";
+
+export const authApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_AUTH_API,
+  withCredentials: true,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
+export const userApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_USER_API,
+  withCredentials: true,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
+// إعداد interceptors
+const setupInterceptors = (apiInstance: any) => {
+  apiInstance.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem("accessToken");
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  apiInstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response)
+        console.error("API Error:", error.response.data);
+      else
+        console.error("Network Error:", error.message);
+      return Promise.reject(error);
+    }
+  );
+};
+
+setupInterceptors(authApi);
+setupInterceptors(userApi);
+
+export default { authApi, userApi };
+
+*/
+
+/*
+
+// src/lib/axios.ts
+import axios from "axios";
+
+export const authApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_AUTH_API,
+  withCredentials: true,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
+export const userApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_USER_API,
+  withCredentials: true,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
 // Interceptors مشتركين
 const setupInterceptors = (apiInstance: typeof axios) => {
   apiInstance.interceptors.request.use(
@@ -35,6 +137,8 @@ setupInterceptors(authApi);
 setupInterceptors(userApi);
 
 export default { authApi, userApi };
+
+*/
 
 /*
 

@@ -5,7 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import CustomSnackbar from "@/components/CustomSnackbar";
-import api from "@/lib/axios";
+import { userApi } from "@/lib/axios";
+//import api from "@/lib/axios";
 
 interface User {
   id: string;
@@ -29,9 +30,42 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("accessToken"); // 1. جلب التوكن من التخزين المحلي
+      if (!token) throw new Error("Missing access token");
+
+      const { data } = await userApi.get("/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`, // 2. إرسال التوكن ضمن الهيدر
+        },
+      });
+
+      // 3. حفظ بيانات المستخدم في الحالة بعد نجاح الطلب
+      setUser(data.user);
+      setName(data.user.name);
+      setEmail(data.user.email);
+    } catch (err: any) {
+      // 4. عرض رسالة خطأ مفهومة للمستخدم
+      setSnackbar({
+        message: `${t("error")}: ${err.response?.data?.message || err.message}`,
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchProfile();
+}, []);
+
+
+/*
+
+  useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data } = await api.get("/user/profile", { withCredentials: true });
+        const { data } = await userApi.get("/profile", { withCredentials: true });
         setUser(data.user);
         setName(data.user.name);
         setEmail(data.user.email);
@@ -44,10 +78,12 @@ export default function ProfilePage() {
     fetchProfile();
   }, []);
 
+*/
+
   const handleUpdate = async () => {
     setSnackbar(null);
     try {
-      const { data } = await api.put("/user/update-profile", { name, email }, { withCredentials: true });
+      const { data } = await userApi.put("/update-profile", { name, email }, { withCredentials: true });
       setUser(data.user);
       setSnackbar({ message: t("update_success"), type: "success" });
       setIsEditing(false);
