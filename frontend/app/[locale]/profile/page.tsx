@@ -35,7 +35,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem("accessToken"); // 1. جلب التوكن من التخزين المحلي
       if (!token) throw new Error("Missing access token");
 
-      const { data } = await userApi.get("/profile", {
+      const { data } = await userApi.get("/user/profile", {
         headers: {
           Authorization: `Bearer ${token}`, // 2. إرسال التوكن ضمن الهيدر
         },
